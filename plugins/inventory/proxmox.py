@@ -506,6 +506,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return result
 
+    def _get_agent_host_name(self, node, vmid):
+        try:
+            ret = self._get_json(f"{self.proxmox_url}/api2/json/nodes/{node}/qemu/{vmid}/agent/get-host-name")
+            host_name = ret["result"]["host-name"]
+        except:
+            host_name = ""
+        return host_name
+
     def _get_vm_config(self, properties, node, vmid, vmtype, name):  # noqa: PLR0912
         ret = self._get_json(f"{self.proxmox_url}/api2/json/nodes/{node}/{vmtype}/{vmid}/config")
 
@@ -543,6 +551,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         if agent_iface_value:
                             agent_iface_key = self.to_safe(f"{key}_interfaces")
                             properties[agent_iface_key] = agent_iface_value
+                        agent_host_name_key = self.to_safe(f"{key}_host_name")
+                        properties[agent_host_name_key] = self._get_agent_host_name(node, vmid)
 
                 if config == "lxc":
                     out_val = {}
